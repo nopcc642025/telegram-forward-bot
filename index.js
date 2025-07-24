@@ -9,6 +9,19 @@ const express = require('express');
 const readline = require('readline');
 require('dotenv').config();
 
+// ------------web 502 error debug --------
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 8080;
+
+app.get("/", (req, res) => {
+  res.send("Bot is alive!");
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 // ------------ Configuration ------------
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const API_ID = Number(process.env.API_ID);
