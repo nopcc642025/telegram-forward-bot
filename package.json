@@ -12,4 +12,8 @@
         "telegram": "^1.8.0",
         "telegraf": "^4.12.3"
     }
+    "scripts": {
+  "start": "node index.js"
+}
+
 }
