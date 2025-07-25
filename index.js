@@ -6,6 +6,8 @@ const { TelegramClient } = require('telegram');
 const { NewMessage } = require('telegram/events');
 const { StringSession } = require('telegram/sessions');
 const express = require('express');
+const { TelegramClient } = require('telegram');
+const { StringSession } = require('telegram/sessions');
 
 // ------------ Configuration ------------
 const BOT_TOKEN = process.env.BOT_TOKEN;
@@ -13,6 +15,17 @@ const API_ID = parseInt(process.env.API_ID, 10);
 const API_HASH = process.env.API_HASH;
 const SESSION_STRING = process.env.SESSION_STRING;
 const PORT = process.env.PORT || 8080;
+
+
+const client = new TelegramClient(
+  new StringSession(SESSION_STRING),
+  API_ID,
+  API_HASH,
+  { connectionRetries: 5 }
+);
+
+await client.start();
+
 
 const SOURCE_CHAT_IDS = [
   -1001670336143, -1001777028234, -1001201589228, -1001307859655,
@@ -52,6 +65,8 @@ bot.launch()
     bot.telegram.sendMessage(DESTINATION_CHAT_ID, '✅ Bot is alive and forwarding messages.');
   })
   .catch(console.error);
+
+
 
 // --- TelegramClient (GramJS / Telethon Equivalent) ---
 const tgClient = new TelegramClient(
