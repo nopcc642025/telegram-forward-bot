@@ -7,19 +7,6 @@ const { NewMessage } = require('telegram/events');
 const { StringSession } = require('telegram/sessions');
 const express = require('express');
 
-HEAD
-// ------------web 502 error debug --------
-const app = express();
-const PORT = process.env.PORT || 8080;
-
-app.get("/", (req, res) => {
-  res.send("Bot is alive!");
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
 // ------------ Configuration ------------
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const API_ID = parseInt(process.env.API_ID, 10);
