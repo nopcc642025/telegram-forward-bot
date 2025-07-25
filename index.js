@@ -6,7 +6,6 @@ const { NewMessage } = require('telegram/events');
 const { StringSession } = require('telegram/sessions');
 const express = require('express');
 const { TelegramClient } = require('telegram');
-const { StringSession } = require('telegram/sessions');
 
 // ------------ Configuration ------------
 const BOT_TOKEN = process.env.BOT_TOKEN;
