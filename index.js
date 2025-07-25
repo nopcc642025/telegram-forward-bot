@@ -2,7 +2,6 @@
 
 require('dotenv').config();
 const { Telegraf } = require('telegraf');
-const { TelegramClient } = require('telegram');
 const { NewMessage } = require('telegram/events');
 const { StringSession } = require('telegram/sessions');
 const express = require('express');
