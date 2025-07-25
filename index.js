@@ -1,14 +1,13 @@
 // index.js
 
+require('dotenv').config();
 const { Telegraf } = require('telegraf');
 const { TelegramClient } = require('telegram');
-const { Api } = require('telegram');
 const { NewMessage } = require('telegram/events');
 const { StringSession } = require('telegram/sessions');
 const express = require('express');
-const readline = require('readline');
-require('dotenv').config();
 
+HEAD
 // ------------web 502 error debug --------
 const express = require('express');
 const app = express();
@@ -24,8 +23,9 @@ app.listen(PORT, () => {
 
 // ------------ Configuration ------------
 const BOT_TOKEN = process.env.BOT_TOKEN;
-const API_ID = Number(process.env.API_ID);
+const API_ID = parseInt(process.env.API_ID, 10);
 const API_HASH = process.env.API_HASH;
+const SESSION_STRING = process.env.SESSION_STRING;
 const PORT = process.env.PORT || 8080;
 
 const SOURCE_CHAT_IDS = [
@@ -36,58 +36,63 @@ const SOURCE_CHAT_IDS = [
 ];
 const DESTINATION_CHAT_ID = -1002875492025;
 
-// ------------ Web Server ------------
+// --- Web Server for Render ---
 const app = express();
-app.get('/', (req, res) => res.send('Bot is alive!'));
-app.listen(PORT, () => console.log(`🌐 Web server running on port ${PORT}`));
+app.get('/', (req, res) => {
+  res.send('✅ Bot is alive and running!');
+});
+app.listen(PORT, () => {
+  console.log(`🌐 Web server running on http://localhost:${PORT}`);
+});
 
-// ------------ Telegraf Bot (Aiogram equivalent) ------------
+// --- Telegraf Bot ---
 const bot = new Telegraf(BOT_TOKEN);
 
 bot.on('message', async (ctx) => {
-  if (SOURCE_CHAT_IDS.includes(ctx.chat.id)) {
+  const chatId = ctx.chat.id;
+  if (SOURCE_CHAT_IDS.includes(chatId)) {
     try {
       await ctx.forwardMessage(DESTINATION_CHAT_ID);
-      console.log(`Telegraf: Forwarded message ${ctx.message.message_id} from ${ctx.chat.id}`);
+      console.log(`📦 Telegraf forwarded message from ${chatId}`);
     } catch (err) {
-      console.error(`Telegraf: Failed to forward message:`, err.message);
+      console.error('❌ Telegraf error:', err.message);
     }
   }
 });
 
-bot.launch().then(() => {
-  console.log('🤖 Telegraf bot started');
-  bot.telegram.sendMessage(DESTINATION_CHAT_ID, '✅ Bot is online and forwarding messages.');
-}).catch(console.error);
+bot.launch()
+  .then(() => {
+    console.log('🤖 Telegraf bot launched');
+    bot.telegram.sendMessage(DESTINATION_CHAT_ID, '✅ Bot is alive and forwarding messages.');
+  })
+  .catch(console.error);
 
-// ------------ TelegramClient (GramJS / Telethon equivalent) ------------
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-const ask = (q) => new Promise(resolve => rl.question(q, resolve));
-
-const stringSession = new StringSession(''); // Can be reused if saved in a .env or database
-const tgClient = new TelegramClient(stringSession, API_ID, API_HASH, { connectionRetries: 5 });
+// --- TelegramClient (GramJS / Telethon Equivalent) ---
+const tgClient = new TelegramClient(
+  new StringSession(SESSION_STRING),
+  API_ID,
+  API_HASH,
+  { connectionRetries: 5 }
+);
 
 (async () => {
-  await tgClient.start({
-    phoneNumber: async () => await ask('Enter phone: '),
-    password: async () => await ask('2FA password (if any): '),
-    phoneCode: async () => await ask('Enter the code you received: '),
-    onError: (err) => console.error(err)
-  });
+  try {
+    await tgClient.start();
+    console.log('📲 TelegramClient (GramJS) started with session');
 
-  console.log('📲 GramJS client started');
-
-  tgClient.addEventHandler(async (event) => {
-    try {
-      const msg = event.message;
-      const chatId = Number(event.chatId?.value || event.chatId);
-
-      if (SOURCE_CHAT_IDS.includes(chatId)) {
-        await tgClient.sendMessage(DESTINATION_CHAT_ID, { message: msg.message });
-        console.log(`GramJS: Forwarded message from ${chatId}`);
+    tgClient.addEventHandler(async (event) => {
+      try {
+        const chatId = Number(event.chatId?.value || event.chatId);
+        const message = event.message?.message;
+        if (SOURCE_CHAT_IDS.includes(chatId) && message) {
+          await tgClient.sendMessage(DESTINATION_CHAT_ID, { message });
+          console.log(`🔁 GramJS forwarded message from ${chatId}`);
+        }
+      } catch (err) {
+        console.error('❌ GramJS forward error:', err.message);
       }
-    } catch (error) {
-      console.error('GramJS error:', error.message);
-    }
-  }, new NewMessage({}));
+    }, new NewMessage({}));
+  } catch (err) {
+    console.error('❌ Failed to start TelegramClient:', err.message);
+  }
 })();
